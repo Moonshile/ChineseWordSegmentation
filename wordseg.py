@@ -30,7 +30,7 @@ class WordInfo(object):
     def __init__(self, text):
         super(WordInfo, self).__init__()
         self.text = text
-        self.freq = 0
+        self.freq = 0.0
         self.left = []
         self.right = []
 
@@ -40,7 +40,7 @@ class WordInfo(object):
         if right: self.right.append(right)
 
     def compute(self, length):
-        self.p = self.freq/float(length)
+        self.freq /= length
         self.left = entropyOfList(self.left)
         self.right = entropyOfList(self.right)
 
@@ -49,14 +49,14 @@ class WordInfo(object):
         parts = genSubparts(self.text)
         if len(parts) > 0:
             self.aggregation = min(map(
-                lambda (p1, p2): self.p/words_dict[p1].p/words_dict[p2].p,
+                lambda (p1, p2): self.freq/words_dict[p1].freq/words_dict[p2].freq,
                 parts
             ))
 
 
 
-def wordSegment(doc, max_word_len=5, min_freq=2, min_entropy=2.0, min_aggregation=50):
-    pattern = re.compile(u'[\s,.<>/?:;\'\"[\\]{}()\\|~!@#$%^&*-_=+a-zA-Z，。《》、？：；“‘｛｝【】（）…￥！—]+')
+def wordSegment(doc, max_word_len=5, min_freq=0.00005, min_entropy=2.0, min_aggregation=50):
+    pattern = re.compile(u'[\\s\\d,.<>/?:;\'\"[\\]{}()\\|~!@#$%^&*\\-_=+a-zA-Z，。《》、？：；“‘｛｝【】（）…￥！—┄－]+')
     doc = re.sub(pattern, '', doc)
     suffix_indexes = indexOfSortedSuffix(doc, max_word_len)
     word_cands = {}
@@ -81,16 +81,7 @@ def wordSegment(doc, max_word_len=5, min_freq=2, min_entropy=2.0, min_aggregatio
         if len(v.text) > 1 and v.aggregation > min_aggregation and\
                 v.freq > min_freq and v.left > min_entropy and v.right > min_entropy:
             sat_words[v.text] = v
-    # remove long words that are combinations of shorter words
-    res = []
-    for v in sat_words.values():
-        if len(v.text) == 2:
-            res.append(v)
-            continue
-        if reduce(lambda res, (p1, p2): res or p1 in sat_words and p2 in sat_words, genSubparts(v.text), False):
-            continue
-        res.append(v)
-    return map(lambda x: x.text, sorted(res, key=lambda v: v.freq, reverse=True))
+    return map(lambda x: x.text, sorted(sat_words.values(), key=lambda v: v.freq, reverse=True))
 
 
 
