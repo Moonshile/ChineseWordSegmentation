@@ -79,7 +79,7 @@ class WordSegment(object):
         self.words = self.genWords(doc)
 
     def genWords(self, doc):
-        pattern = re.compile(u'[\\s\\d,.<>/?:;\'\"[\\]{}()\\|~!@#$%^&*\\-_=+a-zA-Z，。《》、？：；“‘｛｝【】（）…￥！—┄－]+')
+        pattern = re.compile(u'[\\s\\d,.<>/?:;\'\"[\\]{}()\\|~!@#$%^&*\\-_=+a-zA-Z，。《》、？：；“”‘’｛｝【】（）…￥！—┄－]+')
         doc = re.sub(pattern, '', doc)
         suffix_indexes = indexOfSortedSuffix(doc, self.max_word_len)
         word_cands = {}
