@@ -76,11 +76,12 @@ class WordSegment(object):
         self.min_freq = min_freq
         self.min_entropy = min_entropy
         self.min_aggregation = min_aggregation
-        self.words = self.genWords(doc)
+        self.words_with_freq = self.genWords(doc)
+        self.words = map(lambda w: w[0], self.words_with_freq)
 
     def genWords(self, doc):
         pattern = re.compile(u'[\\s\\d,.<>/?:;\'\"[\\]{}()\\|~!@#$%^&*\\-_=+a-zA-Z，。《》、？：；“”‘’｛｝【】（）…￥！—┄－]+')
-        doc = re.sub(pattern, '', doc)
+        doc = re.sub(pattern, ' ', doc)
         suffix_indexes = indexOfSortedSuffix(doc, self.max_word_len)
         word_cands = {}
         # compute frequency and neighbors
@@ -104,7 +105,7 @@ class WordSegment(object):
             if len(v.text) > 1 and v.aggregation > self.min_aggregation and\
                     v.freq > self.min_freq and v.left > self.min_entropy and v.right > self.min_entropy:
                 sat_words[v.text] = v
-        return set(map(lambda x: x.text, sorted(sat_words.values(), key=lambda v: v.freq, reverse=True)))
+        return set(map(lambda x: (x.text, x.freq), sorted(sat_words.values(), key=lambda v: v.freq, reverse=True)))
 
     def segSentence(self, sentence, method=ALL):
         i = 0
@@ -128,7 +129,12 @@ class WordSegment(object):
         return res
 
 
-
+if __name__ == '__main__':
+    doc = u'十四是十四四十是四十，，十四不是四十，，，，四十不是十四'
+    ws = WordSegment(doc, max_word_len=2, min_aggregation=1, min_entropy=0.5)
+    print ' '.join(map(lambda w: '%s:%f'%w, ws.words_with_freq))
+    print ' '.join(ws.words)
+    print ' '.join(ws.segSentence(doc))
 
 
 
