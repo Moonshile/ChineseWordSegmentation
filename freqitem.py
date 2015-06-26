@@ -17,6 +17,10 @@ class FreqItem(object):
         self.freqset = []
 
     def filterCandidates(self, cand):
+        """
+        Build a HashTree with candidates cand, then count support of these candidates to filter out
+        all those that have support not lower than sup_theta
+        """
         hashtree = HashTree(cand)
         hashtree.count(self.transactions)
         return hashtree.getNodes(self.sup_theta)
@@ -32,11 +36,13 @@ class FreqItem(object):
         return sorted(self.filterCandidates([[i] for i in one_item_cand]), key=lambda i: i[0].name)
 
     def genNextCand(self, preItems):
+        """
+        Generate next candidates by dynamic programming
+        Find range [i, j) such that items in this range have same prefix
+        e.g., [1,2,3,4] and [1,2,3,5] have same prefix, so they should be in one same range
+        Then, generate 2-combinations of these ranges as result
+        """
         res = []
-        # Generate next candidates by dynamic programming
-        # Find range [i, j) such that items in this range have same prefix
-        # e.g., [1,2,3,4] and [1,2,3,5] have same prefix, so they should be in one same range
-        # Then, generate 2-combinations of these ranges as result
         i, j = 0, 0
         while i < len(preItems):
             if j < len(preItems) and sameNodes(preItems[j][:-1], preItems[i][:-1]):

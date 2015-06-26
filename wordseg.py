@@ -40,16 +40,29 @@ class WordInfo(object):
         self.aggregation = 0
 
     def update(self, left, right):
+        """
+        Increase frequency of this word, then append left/right neighbors
+        @param left a single character on the left side of this word
+        @param right as left is, but on the right side
+        """
         self.freq += 1
         if left: self.left.append(left)
         if right: self.right.append(right)
 
     def compute(self, length):
+        """
+        Compute frequency and entropy of this word
+        @param length length of the document for training to get words
+        """
         self.freq /= length
         self.left = entropyOfList(self.left)
         self.right = entropyOfList(self.right)
 
     def computeAggregation(self, words_dict):
+        """
+        Compute aggregation of this word
+        @param words_dict frequency dict of all candidate words
+        """
         parts = genSubparts(self.text)
         if len(parts) > 0:
             self.aggregation = min(map(
@@ -95,6 +108,10 @@ class WordSegment(object):
         self.words = map(lambda w: w[0], self.word_with_freq)
 
     def genWords(self, doc):
+        """
+        Generate all candidate words with their frequency/entropy/aggregation informations
+        @param doc the document used for words generation
+        """
         pattern = re.compile(u'[\\s\\d,.<>/?:;\'\"[\\]{}()\\|~!@#$%^&*\\-_=+a-zA-Z，。《》、？：；“”‘’｛｝【】（）…￥！—┄－]+')
         doc = re.sub(pattern, ' ', doc)
         suffix_indexes = indexOfSortedSuffix(doc, self.max_word_len)
@@ -117,6 +134,11 @@ class WordSegment(object):
         return sorted(values, key=lambda v: v.freq, reverse=True)
 
     def segSentence(self, sentence, method=ALL):
+        """
+        Segment a sentence with the words generated from a document
+        @param sentence the sentence to be handled
+        @param method segmentation method
+        """
         i = 0
         res = []
         while i < len(sentence):
