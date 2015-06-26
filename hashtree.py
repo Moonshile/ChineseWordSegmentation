@@ -38,15 +38,34 @@ class HashTreeNode(object):
                     self.children[t].count(transaction[i:])
 
     def get(self, theta):
+        return map(lambda items: map(lambda c: c.name, items), self.getNodes(theta))
+        """
         if self.level == 0:
             return [[self.name]] if self.val >= theta else None
         else:
             children_res = [self.children[i].get(theta) for i in sorted(self.children.keys())]
             total = reduce(lambda res, x: res + x, filter(lambda x: x, children_res), [])
             return map(lambda c: [self.name] + c, total)
+        """
+
+    def getNodes(self, theta):
+        if self.level == 0:
+            return [[self]] if self.val >= theta else None
+        else:
+            children_res = [self.children[i].getNodes(theta) for i in sorted(self.children.keys())]
+            total = reduce(lambda res, x: res + x, filter(lambda x: x, children_res), [])
+            return map(lambda c: [self] + c, total)
 
     def __str__(self):
         return '(%s : %s)'%(self.name, '; '.join([str(i) for i in self.children.values()]))
+
+def sameNode(node1, node2):
+    return node1.name == node2.name
+
+def sameNodes(nodes1, nodes2):
+    func = lambda n: n.name
+    return map(func, nodes1) == map(func, nodes2)
+
 
 
 class HashTree(object):
@@ -64,6 +83,10 @@ class HashTree(object):
 
     def get(self, theta):
         res = map(lambda c: c[1:], self.root.get(theta))
+        return [] if res == [[]] else res
+
+    def getNodes(self, theta):
+        res = map(lambda c: c[1:], self.root.getNodes(theta))
         return [] if res == [[]] else res
 
     def __str__(self):
