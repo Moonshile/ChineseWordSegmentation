@@ -15,6 +15,10 @@ from sequence import genSubparts, genSubstr
 
 
 def indexOfSortedSuffix(doc, max_word_len):
+    """
+    Treat a suffix as an index where the suffix begins.
+    Then sort these indexes by the suffixes.
+    """
     indexes = []
     length = len(doc)
     for i in xrange(0, length):
@@ -33,6 +37,7 @@ class WordInfo(object):
         self.freq = 0.0
         self.left = []
         self.right = []
+        self.aggregation = 0
 
     def update(self, left, right):
         self.freq += 1
@@ -45,7 +50,6 @@ class WordInfo(object):
         self.right = entropyOfList(self.right)
 
     def computeAggregation(self, words_dict):
-        self.aggregation = 0
         parts = genSubparts(self.text)
         if len(parts) > 0:
             self.aggregation = min(map(
@@ -76,8 +80,19 @@ class WordSegment(object):
         self.min_freq = min_freq
         self.min_entropy = min_entropy
         self.min_aggregation = min_aggregation
-        self.words_with_freq = self.genWords(doc)
-        self.words = map(lambda w: w[0], self.words_with_freq)
+        self.word_infos = self.genWords(doc)
+        # Result infomations, i.e., average data of all words
+        word_count = float(len(self.word_infos))
+        self.avg_len = sum(map(lambda w: len(w.text), self.word_infos))/word_count
+        self.avg_freq = sum(map(lambda w: w.freq, self.word_infos))/word_count
+        self.avg_left_entropy = sum(map(lambda w: w.left, self.word_infos))/word_count
+        self.avg_right_entropy = sum(map(lambda w: w.right, self.word_infos))/word_count
+        self.avg_aggregation = sum(map(lambda w: w.aggregation, self.word_infos))/word_count
+        # Filter out the results satisfy all the requirements
+        filter_func = lambda v: len(v.text) > 1 and v.aggregation > self.min_aggregation and\
+                    v.freq > self.min_freq and v.left > self.min_entropy and v.right > self.min_entropy
+        self.word_with_freq = map(lambda w: (w.text, w.freq), filter(filter_func, self.word_infos))
+        self.words = map(lambda w: w[0], self.word_with_freq)
 
     def genWords(self, doc):
         pattern = re.compile(u'[\\s\\d,.<>/?:;\'\"[\\]{}()\\|~!@#$%^&*\\-_=+a-zA-Z，。《》、？：；“”‘’｛｝【】（）…￥！—┄－]+')
@@ -99,13 +114,7 @@ class WordSegment(object):
         for v in values:
             if len(v.text) == 1: continue
             v.computeAggregation(word_cands)
-        # words which satisfies the conditions
-        sat_words = {}
-        for v in values:
-            if len(v.text) > 1 and v.aggregation > self.min_aggregation and\
-                    v.freq > self.min_freq and v.left > self.min_entropy and v.right > self.min_entropy:
-                sat_words[v.text] = v
-        return set(map(lambda x: (x.text, x.freq), sorted(sat_words.values(), key=lambda v: v.freq, reverse=True)))
+        return sorted(values, key=lambda v: v.freq, reverse=True)
 
     def segSentence(self, sentence, method=ALL):
         i = 0
@@ -131,10 +140,14 @@ class WordSegment(object):
 
 if __name__ == '__main__':
     doc = u'十四是十四四十是四十，，十四不是四十，，，，四十不是十四'
-    ws = WordSegment(doc, max_word_len=2, min_aggregation=1, min_entropy=0.5)
-    print ' '.join(map(lambda w: '%s:%f'%w, ws.words_with_freq))
+    ws = WordSegment(doc, max_word_len=2, min_aggregation=1.2, min_entropy=0.4)
+    print ' '.join(map(lambda w: '%s:%f'%w, ws.word_with_freq))
     print ' '.join(ws.words)
     print ' '.join(ws.segSentence(doc))
-
+    print 'average len: ', ws.avg_len
+    print 'average frequency: ', ws.avg_freq
+    print 'average left entropy: ', ws.avg_left_entropy
+    print 'average right entropy: ', ws.avg_right_entropy
+    print 'average aggregation: ', ws.avg_aggregation
 
 
