@@ -4,6 +4,7 @@
 A simple implementation of Hash Tree
 Author: 段凯强
 """
+from functools import reduce
 
 class HashTreeNode(object):
     def __init__(self, name=''):
@@ -38,7 +39,7 @@ class HashTreeNode(object):
                     self.children[t].count(transaction[i:])
 
     def get(self, theta):
-        return map(lambda items: map(lambda c: c.name, items), self.getNodes(theta))
+        return [[c.name for c in items] for items in self.getNodes(theta)]
         """
         if self.level == 0:
             return [[self.name]] if self.val >= theta else None
@@ -53,18 +54,18 @@ class HashTreeNode(object):
             return [[self]] if self.val >= theta else None
         else:
             children_res = [self.children[i].getNodes(theta) for i in sorted(self.children.keys())]
-            total = reduce(lambda res, x: res + x, filter(lambda x: x, children_res), [])
-            return map(lambda c: [self] + c, total)
+            total = reduce(lambda res, x: res + x, [x for x in children_res if x], [])
+            return [[self] + c for c in total]
 
     def __str__(self):
-        return '(%s : %s)'%(self.name, '; '.join([str(i) for i in self.children.values()]))
+        return '(%s : %s)'%(self.name, '; '.join([str(i) for i in list(self.children.values())]))
 
 def sameNode(node1, node2):
     return node1.name == node2.name
 
 def sameNodes(nodes1, nodes2):
     func = lambda n: n.name
-    return map(func, nodes1) == map(func, nodes2)
+    return list(map(func, nodes1)) == list(map(func, nodes2))
 
 
 
@@ -82,11 +83,11 @@ class HashTree(object):
         for t in transactions: self.root.count(t)
 
     def get(self, theta):
-        res = map(lambda c: c[1:], self.root.get(theta))
+        res = [c[1:] for c in self.root.get(theta)]
         return [] if res == [[]] else res
 
     def getNodes(self, theta):
-        res = map(lambda c: c[1:], self.root.getNodes(theta))
+        res = [c[1:] for c in self.root.getNodes(theta)]
         return [] if res == [[]] else res
 
     def __str__(self):
@@ -97,8 +98,8 @@ if __name__ == '__main__':
     tree = HashTree(to_count)
     transactions = [[1,2,3],[1,2,4],[2,4,6,8],[1,3,5,7]]
     tree.count(transactions)
-    print 'Frequency with transactions', transactions
-    print tree.get(2)
-    print tree.get(1)
+    print('Frequency with transactions', transactions)
+    print(tree.get(2))
+    print(tree.get(1))
 
 
