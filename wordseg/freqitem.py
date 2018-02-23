@@ -7,12 +7,13 @@ Author: 段凯强
 
 import itertools
 
-from sequence import dedup
-from hashtree import HashTree, sameNodes
+from wordseg.sequence import dedup
+from wordseg.hashtree import HashTree, sameNodes
+from functools import reduce
 
 class FreqItem(object):
     def __init__(self, transactions, sup_theta=.1):
-        self.transactions = [sorted(t) for t in filter(lambda x: x, transactions)]
+        self.transactions = [sorted(t) for t in [x for x in transactions if x]]
         self.sup_theta = sup_theta*len(transactions)
         self.freqset = []
 
@@ -50,7 +51,7 @@ class FreqItem(object):
             else:
                 res += [pair[0] + [pair[1][-1]] for pair in itertools.combinations(preItems[i:j], 2)]
                 i = j
-        return map(lambda items: map(lambda i: i.name, items), res)
+        return [[i.name for i in items] for items in res]
 
     def genFreqItemSets(self):
         """
@@ -63,11 +64,11 @@ class FreqItem(object):
             freqKSet.append(cur)
             cur = self.filterCandidates(self.genNextCand(cur))
         self.freqset = reduce(lambda res, x: res + x, freqKSet, [])
-        name_freq_pairs = map(lambda items: map(lambda i: (i.name, i.val), items), self.freqset[::-1])
-        res = map(lambda items: zip(*items), name_freq_pairs)
-        return map(lambda pair: (list(pair[0]), pair[1][-1]), res)
+        name_freq_pairs = [[(i.name, i.val) for i in items] for items in self.freqset[::-1]]
+        res = [list(zip(*items)) for items in name_freq_pairs]
+        return [(list(pair[0]), pair[1][-1]) for pair in res]
 
 if __name__ == '__main__':
     transactions = [[1,2,3],[1,2,4],[2,4,6,8],[1,3,5,7], [5,7,2]]
     freqItem = FreqItem(transactions, sup_theta=.3)
-    print freqItem.genFreqItemSets()
+    print(freqItem.genFreqItemSets())
