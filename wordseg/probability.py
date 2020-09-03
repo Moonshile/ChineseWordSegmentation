@@ -16,7 +16,8 @@ def entropyOfList(ls):
     for e in ls:
         elements[e] = elements.get(e, 0) + 1
     length = float(len(ls))
-    return sum([-v/length*math.log(v/length) for v in list(elements.values())])
+    # if length is 0, which means one side of a work is empty, which is only one single determinated case, so entropy should be 0
+    return length and sum([-v/length*math.log(v/length) for v in list(elements.values())])
 
 
 
